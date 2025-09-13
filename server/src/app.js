@@ -42,9 +42,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
 
-app.get("/", (req, res) => {
-  res.send("✅ Server is running on Render");
-});
 // Routes
 app.use('/api/auth', adminRoutes);
 app.use('/api/content', contentRoutes);

@@ -1,26 +1,27 @@
-const createError = require('http-errors');
-
+// src/middleware/errorHandler.js
 const errorHandler = (err, req, res, next) => {
-  // Log the error
   console.error('Error:', err.message);
-  console.error('Stack:', err.stack);
   
-  // Set status code
-  const statusCode = err.status || err.statusCode || 500;
+  const statusCode = err.status || 500;
+  const message = statusCode === 404 ? 'Route not found' : err.message || 'Internal Server Error';
   
-  // Send JSON error response
   res.status(statusCode).json({
     error: {
       status: statusCode,
-      message: err.message || 'Internal Server Error',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      message: message,
+      timestamp: new Date().toISOString()
     }
   });
 };
 
-const notFoundHandler = (req, res, next) => {
-  const error = createError.NotFound(`Route not found: ${req.originalUrl}`);
-  next(error);
+const notFoundHandler = (req, res) => {
+  res.status(404).json({
+    error: {
+      status: 404,
+      message: `Route not found: ${req.originalUrl}`,
+      timestamp: new Date().toISOString()
+    }
+  });
 };
 
 module.exports = { errorHandler, notFoundHandler };

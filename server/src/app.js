@@ -8,7 +8,6 @@ const logger = require('./utils/logger');
 const seedDatabase = require('./utils/seeder');
 require('dotenv').config();
 const { NODE_ENV, CORS_ORIGIN } = require('./config/env');
-
 // Import routes
 const adminRoutes = require('./routes/adminRoutes');
 const contentRoutes = require('./routes/contentRoutes');
@@ -24,9 +23,6 @@ if (NODE_ENV !== 'production') {
   seedDatabase();
 }
 
-// Trust proxy - IMPORTANT for Render and rate limiting
-app.set('trust proxy', 1);
-
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -41,42 +37,9 @@ app.use(logger);
 app.use('/api', apiLimiter);
 app.use('/api/content/search', searchLimiter);
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: 'ArcXZone API Server',
-    version: '1.0.0',
-    status: 'running',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      content: '/api/content'
-    }
-  });
-});
-
-// API root endpoint
-app.get('/api', (req, res) => {
-  res.json({
-    message: 'ArcXZone API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      content: '/api/content'
-    }
-  });
-});
-
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    database: 'connected',
-    timestamp: new Date().toISOString(),
-    environment: NODE_ENV
-  });
+  res.json({ status: 'ok', timestamp: new Date() });
 });
 
 // Routes
@@ -84,7 +47,7 @@ app.use('/api/auth', adminRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/content', availabilityRoutes);
 
-// Error handling - MUST be last
+// Error handling
 app.use(notFoundHandler);
 app.use(errorHandler);
 

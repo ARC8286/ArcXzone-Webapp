@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    
+    <!-- Add Framer Motion for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/framer-motion/10.16.4/framer-motion.min.js"></script>
+    
+    <!-- SVG Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%234F46E5'/><stop offset='50%' stop-color='%237C3AED'/><stop offset='100%' stop-color='%23EC4899'/></linearGradient><circle cx='100' cy='100' r='90' fill='rgba(0,0,0,0.1)'/><path d='M60,60 L140,140 M140,60 L60,140' stroke='url(%23grad)' stroke-width='16' stroke-linecap='round'/><path d='M100,30 A70,70 0 1,1 100,170 A70,70 0 1,1 100,30' fill='none' stroke='url(%23grad)' stroke-width='4' stroke-dasharray='10,5'/></svg>" type="image/svg+xml">
+    
+<!-- SVG Favicon -->
+<link rel="icon" 
+      href="data:image/svg+xml,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'>
+  <defs>
+    <linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='%234F46E5'/>
+      <stop offset='50%' stop-color='%237C3AED'/>
+      <stop offset='100%' stop-color='%23EC4899'/>
+    </linearGradient>
+    <filter id='glow' x='-50%' y='-50%' width='200%' height='200%'>
+      <feGaussianBlur stdDeviation='3' result='blur'/>
+      <feMerge>
+        <feMergeNode in='blur'/>
+        <feMergeNode in='SourceGraphic'/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Circle -->
+  <circle cx='100' cy='100' r='95' fill='black'/>
+
+  <!-- Main X -->
+  <path d='M60,60 L140,140 M140,60 L60,140'
+        stroke='url(%23grad)' 
+        stroke-width='20' 
+        stroke-linecap='round'
+        filter='url(%23glow)'/>
+
+  <!-- Decorative Circle -->
+  <circle cx='100' cy='100' r='70' 
+          fill='none' 
+          stroke='url(%23grad)' 
+          stroke-width='6' 
+          stroke-dasharray='12,6'
+          filter='url(%23glow)'/>
+</svg>" 
+      type="image/svg+xml">
+    <title>ArcXzone</title>
+    
+    <style>
+      /* Add some basic styling for the logo if needed */
+      .logo-container {
+        display: inline-block;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

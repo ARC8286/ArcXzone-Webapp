@@ -8,7 +8,9 @@ const apiLimiter = rateLimit({
       status: 429,
       message: 'Too many requests, please try again later.'
     }
-  }
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
 const searchLimiter = rateLimit({
@@ -19,7 +21,9 @@ const searchLimiter = rateLimit({
       status: 429,
       message: 'Too many search requests, please try again later.'
     }
-  }
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 module.exports = { apiLimiter, searchLimiter };

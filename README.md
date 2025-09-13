@@ -30,7 +30,7 @@ server/       # Node.js + Express backend
 #### 1. Clone the repository
 
 ```sh
-git clone <your-repo-url>
+git clone <https://github.com/ARC8286/ArcXzone-Webapp.git>
 cd ArcXzoneSeries
 ```
 

@@ -22,25 +22,14 @@ function App() {
               <Route path="/content/:id" element={<ContentPage />} />
               <Route path="/content" element={<ViewAllPage />} />
               <Route path="/login" element={<Login />} />
-              
-              {/* Admin Routes with Protection */}
-              <Route 
-                path="/admin/*" 
+              <Route
+                path="/admin/*"
                 element={
-                  <ProtectedRoute requireAdmin={true}>
+                  <ProtectedRoute>
                     <AdminPanel />
                   </ProtectedRoute>
-                } 
+                }
               />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={
-                <div className="flex items-center justify-center h-screen">
-                  <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-                    404 - Page Not Found
-                  </h1>
-                </div>
-              } />
             </Routes>
           </div>
         </Router>

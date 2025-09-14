@@ -1,33 +1,54 @@
 // src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Film, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const { login } = useAuth();
+  
+  const { login, isAuthenticated, loading: authLoading, error: authError, clearError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect if already authenticated
+  const from = location.state?.from?.pathname || '/admin';
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // If already authenticated, redirect to intended page
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+    
     return () => setIsMounted(false);
-  }, []);
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    clearError(); // Clear any previous errors
 
     const result = await login(email, password);
-    if (!result.success) {
-      setError(result.error);
+    if (result.success) {
+      navigate(from, { replace: true });
     }
-    setLoading(false);
   };
+
+  // If already authenticated, don't show login form
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-12 w-12 mx-auto text-indigo-600" />
+          <p className="mt-4 text-gray-600">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8 transition-all duration-500">
@@ -49,12 +70,12 @@ const Login = () => {
           </div>
           
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            {error && (
+            {authError && (
               <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-4 py-3 text-red-600 dark:text-red-400 text-sm flex items-center animate-pulse">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {error}
+                {authError}
               </div>
             )}
             
@@ -70,9 +91,10 @@ const Login = () => {
                     type="email"
                     required
                     className="appearance-none block w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
-                    placeholder="your.email@example.com"
+                    placeholder="admin@arcxzone.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={authLoading}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -97,11 +119,13 @@ const Login = () => {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={authLoading}
                   />
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={authLoading}
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
@@ -120,24 +144,29 @@ const Login = () => {
                   name="remember-me"
                   type="checkbox"
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  disabled={authLoading}
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-gray-700 dark:text-gray-300">
                   Remember me
                 </label>
               </div>
 
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+              <button
+                type="button"
+                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                disabled={authLoading}
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={authLoading}
                 className="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 transition-all duration-300 shadow-md hover:shadow-lg"
               >
-                {loading ? (
+                {authLoading ? (
                   <>
                     <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
                     Signing in...

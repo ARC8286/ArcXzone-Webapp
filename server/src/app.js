@@ -27,11 +27,7 @@ if (NODE_ENV !== 'production') {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://arc-xzone-webapp.vercel.app',
-    'https://*.vercel.app'
-  ],
+  origin: CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());

@@ -1,8 +1,7 @@
 // src/services/api.js
 import axios from 'axios';
 
-// src/services/api.js में change करें:
-const API_BASE_URL = import.meta.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arcxzone-webapp.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -92,7 +91,5 @@ export const userAPI = {
   getPreferences: () => api.get('/users/preferences'),
   updatePreferences: (data) => api.put('/users/preferences', data),
 };
-
-
 
 export default api;

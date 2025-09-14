@@ -26,8 +26,13 @@ if (NODE_ENV !== 'production') {
 
 // Middleware
 app.use(helmet());
+// backend के app.js में - Line 29 पर CORS settings को ये करें:
 app.use(cors({
-  origin: CORS_ORIGIN || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://arc-xzone-webapp.vercel.app',
+    'https://*.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());

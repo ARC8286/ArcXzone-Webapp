@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -22,7 +23,10 @@ export const AuthProvider = ({ children }) => {
         try {
           const profile = await getProfile();
           setAdmin(profile);
+          setError(null);
         } catch (error) {
+          console.error('Auth initialization failed:', error);
+          setError('Session expired. Please login again.');
           logout();
         }
       }
@@ -34,19 +38,26 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await apiLogin(email, password);
       setToken(response.token);
       localStorage.setItem('token', response.token);
       setAdmin(response.admin);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.message };
+      const errorMessage = error.response?.data?.error?.message || error.message || 'Login failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
     setToken(null);
     setAdmin(null);
+    setError(null);
     localStorage.removeItem('token');
   };
 
@@ -58,6 +69,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     loading,
+    error,
+    clearError: () => setError(null)
   };
 
   return (

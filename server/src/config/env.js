@@ -6,7 +6,7 @@ module.exports = {
   PORT: process.env.PORT || 5000,
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/arcxzone',
   JWT_SECRET: process.env.JWT_SECRET || 'your-strong-secret-key',
-  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'https://arcxzone-webapp.vercel.app/',
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@arcxzone.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'securePassword123!'
 };

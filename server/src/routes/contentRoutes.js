@@ -15,18 +15,18 @@ const {
   getContentByType
 } = require('../controllers/contentController');
 
-// Public routes
-router.get('/', getAllContent);
+// Public routes - specific ones first
 router.get('/search', searchContent);
-router.get('/:id', getContentById);
-
-// Content type specific routes
 router.get('/type/movies', getAllLatestMovies);
 router.get('/type/webseries', getAllWebSeries);
 router.get('/type/anime', getAllAnime);
-router.get('/type/:type', getContentByType); // Generic type route
+router.get('/type/:type', getContentByType);
 
-// Admin protected routes
+// Then generic routes
+router.get('/', getAllContent);
+router.get('/:id', getContentById);
+
+// Admin routes last
 router.post('/', authenticate, validateContent, createContent);
 router.put('/:id', authenticate, validateContent, updateContent);
 router.delete('/:id', authenticate, deleteContent);

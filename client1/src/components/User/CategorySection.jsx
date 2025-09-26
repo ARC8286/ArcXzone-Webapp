@@ -29,9 +29,9 @@
       const fetchContent = async () => {
         try {
           const [movies, webseries, anime] = await Promise.all([
-            contentAPI.getAll({ type: 'movie', limit: 12 }),
-            contentAPI.getAll({ type: 'webseries', limit: 12 }),
-            contentAPI.getAll({ type: 'anime', limit: 12 })
+            contentAPI.getAll({ type: 'movie', limit: 1200 }),
+            contentAPI.getAll({ type: 'webseries', limit: 1200 }),
+            contentAPI.getAll({ type: 'anime', limit: 1200   })
           ]);
 
           setContent({

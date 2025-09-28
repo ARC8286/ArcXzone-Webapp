@@ -1,6 +1,6 @@
 // src/components/Common/SearchBar.jsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, X, Loader2, Film, Tv, Play, Star, Calendar, ChevronRight, Mic, Image } from "lucide-react";
+import { Search, X, Loader2, Film, Tv, Play, Star, Calendar, ChevronRight, Mic, Image, Frown } from "lucide-react";
 import { contentAPI } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +18,7 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
   const [isVoiceSearchAvailable, setIsVoiceSearchAvailable] = useState(false);
   const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState({});
+  const [searchAttempted, setSearchAttempted] = useState(false);
   
   const navigate = useNavigate();
   const inputRef = useRef(null);
@@ -70,6 +71,7 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
       setResults([]);
       setShowDropdown(false);
       setSelectedIndex(-1);
+      setSearchAttempted(false);
     }
   }, [debouncedQuery]);
 
@@ -81,6 +83,7 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
 
   const handleSearch = async (q) => {
     setLoading(true);
+    setSearchAttempted(true);
     try {
       const response = await contentAPI.search(q);
       setResults(response.data);
@@ -94,6 +97,7 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
     } catch (error) {
       console.error("Search error:", error);
       setResults([]);
+      setShowDropdown(true);
     } finally {
       setLoading(false);
     }
@@ -103,6 +107,7 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
     if (query.trim().length === 0) return;
     
     setLoading(true);
+    setSearchAttempted(true);
     try {
       const response = await contentAPI.search(query.trim());
       setResults(response.data);
@@ -126,6 +131,7 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
     setResults([]);
     setShowDropdown(false);
     setSelectedIndex(-1);
+    setSearchAttempted(false);
     inputRef.current?.focus();
     
     // Clear parent search results if callback provided
@@ -254,6 +260,64 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
       }
     }
   });
+
+  // Render no results state
+  const renderNoResults = () => (
+    <motion.div 
+      className="p-8 text-center"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 
+                  dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center"
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+      >
+        <Frown className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+      </motion.div>
+      
+      <motion.h3 
+        className="text-gray-700 dark:text-gray-300 text-lg font-semibold mb-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        No results found
+      </motion.h3>
+      
+      <motion.p 
+        className="text-gray-500 dark:text-gray-400 text-sm mb-4 max-w-xs mx-auto leading-relaxed"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        We couldn't find any content matching <span className="font-medium text-gray-700 dark:text-gray-300">"{query}"</span>
+      </motion.p>
+
+      <motion.div 
+        className="text-xs text-gray-400 dark:text-gray-500 space-y-1"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <p className="flex items-center justify-center gap-1">
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+          Check your spelling and try again
+        </p>
+        <p className="flex items-center justify-center gap-1">
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+          Try more general keywords
+        </p>
+        <p className="flex items-center justify-center gap-1">
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+          Browse different categories
+        </p>
+      </motion.div>
+    </motion.div>
+  );
 
   return (
     <div 
@@ -549,22 +613,8 @@ const SearchBar = ({ placeholder = "Search movies, webseries, anime...", onSearc
                       );
                     })
                   ) : (
-                    <motion.div 
-                      className="p-8 text-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 
-                                  rounded-full flex items-center justify-center">
-                        <Search className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">
-                        No results found for "{query}"
-                      </p>
-                      <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                        Try searching with different keywords or check the spelling
-                      </p>
-                    </motion.div>
+                    // Enhanced No Results State
+                    searchAttempted && renderNoResults()
                   )}
                 </div>
               )}

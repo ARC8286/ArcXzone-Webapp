@@ -1,8 +1,9 @@
-// src/pages/ContentPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Calendar, Clock, Star, Download, Globe, HardDrive, Play, Share, Heart, ArrowLeft } from 'lucide-react';
-import { contentAPI } from '../services/api';
+import { 
+  Calendar, Clock, Star, Download, Globe, HardDrive, ArrowLeft, Flag, Zap 
+} from 'lucide-react';
+import { contentAPI } from '../services/api'; // Assuming this API is available
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -41,14 +42,90 @@ const scaleUp = {
   }
 };
 
+// Component for a single download card
+const DownloadCard = ({ option, index }) => {
+  return (
+    <motion.div
+      key={index}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.5 + (index * 0.1), type: "spring", stiffness: 100 }}
+      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(124, 58, 237, 0.3)" }}
+      className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-5 transition-all duration-300 bg-gradient-to-r from-white/95 to-gray-50/95 dark:from-gray-800 dark:to-gray-900 shadow-xl cursor-pointer"
+    >
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-3">
+        
+        {/* Title and Metadata */}
+        <div className="flex-1 space-y-2">
+          <h3 className="font-extrabold text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500">
+            {option.label}
+          </h3>
+          <div className="flex flex-wrap items-center text-xs md:text-sm text-gray-600 dark:text-gray-300 gap-2">
+            
+            {/* Language Highlight (Prominent) */}
+            <div className="flex items-center bg-indigo-100 dark:bg-indigo-900 px-3 py-1.5 rounded-full font-bold shadow-md">
+              <Flag size={14} className="mr-1 text-indigo-600 dark:text-indigo-300 md:size-4" />
+              <span className="text-indigo-600 dark:text-indigo-300">{option.language}</span>
+            </div>
+
+            {/* Source Type Badge */}
+            {option.sourceType === 'TelegramBot' && 
+              <div className="flex items-center bg-blue-100 dark:bg-blue-900 px-3 py-1.5 rounded-full">
+                <Globe size={14} className="mr-1 text-blue-600 dark:text-blue-300 md:size-4" />
+                <span className="text-blue-600 dark:text-blue-300">Telegram</span>
+              </div>
+            }
+            {option.sourceType === 'SelfHosted' && 
+              <div className="flex items-center bg-green-100 dark:bg-green-900 px-3 py-1.5 rounded-full">
+                <HardDrive size={14} className="mr-1 text-green-600 dark:text-green-300 md:size-4" />
+                <span className="text-green-600 dark:text-green-300">Self-Hosted</span>
+              </div>
+            }
+            
+            {/* Quality and Size Badges */}
+            <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-1.5 rounded-full font-medium">
+              <Zap size={14} className="inline mr-1" />
+              {option.quality || 'Unknown Quality'}
+            </span>
+            {option.size && (
+              <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-full font-mono">
+                {option.size}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Download Button */}
+        <motion.a
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          href={option.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center px-6 py-2 md:py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl hover:from-purple-700 hover:to-indigo-700 text-sm md:text-base mt-3 md:mt-0 w-full md:w-auto justify-center whitespace-nowrap"
+        >
+          <Download size={18} className="mr-2 md:size-5" />
+          Get Download
+        </motion.a>
+      </div>
+      
+      {/* License Note */}
+      {option.licenseNote && (
+        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border-l-4 border-violet-500">
+          <span className="font-semibold mr-1">Category:</span> {option.licenseNote}
+        </p>
+      )}
+    </motion.div>
+  );
+};
+
+
 const ContentPage = () => {
   const { id } = useParams();
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,16 +133,14 @@ const ContentPage = () => {
       try {
         const response = await contentAPI.getById(id);
         setContent(response.data);
+        
         // Preload the backdrop image
         const img = new Image();
         img.src = response.data.backdropUrl || response.data.posterUrl;
         img.onload = () => setImageLoaded(true);
         
-        // Check if content is in favorites
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        setIsFavorite(favorites.includes(response.data.id));
       } catch (err) {
-        setError('Content not found');
+        setError('Content not found or API error.');
         console.error('Error fetching content:', err);
       } finally {
         setLoading(false);
@@ -75,39 +150,10 @@ const ContentPage = () => {
     fetchContent();
   }, [id]);
 
-  const toggleFavorite = () => {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    if (isFavorite) {
-      const updatedFavorites = favorites.filter(favId => favId !== content.id);
-      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    } else {
-      favorites.push(content.id);
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-    }
-    setIsFavorite(!isFavorite);
-  };
-
-  const shareContent = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: content.title,
-          text: content.description,
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.error('Error sharing:', err);
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-800 flex items-center justify-center">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -126,7 +172,7 @@ const ContentPage = () => {
 
   if (error || !content) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-800 flex items-center justify-center">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -165,7 +211,8 @@ const ContentPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 pb-12">
+    <div className="min-h-screen bg-gray-900 dark:bg-black pb-12 font-sans">
+      
       {/* Back Button */}
       <motion.button 
         initial={{ opacity: 0, x: -20 }}
@@ -174,16 +221,16 @@ const ContentPage = () => {
         whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
         whileTap={{ scale: 0.9 }}
         onClick={() => navigate(-1)}
-        className="fixed top-4 left-4 md:top-6 md:left-6 z-50 p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all duration-300 group touch-manipulation"
+        className="fixed top-4 left-4 md:top-6 md:left-6 z-50 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all duration-300 group touch-manipulation shadow-lg"
         aria-label="Go back"
       >
         <ArrowLeft size={20} className="text-white group-hover:scale-110 transition-transform md:size-6" />
       </motion.button>
       
-      {/* Hero Section with Backdrop */}
+      {/* Hero Section: Purely Visual Background */}
       <div 
-        className="h-80 md:h-96 relative bg-cover bg-center overflow-hidden"
-        style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url(${content.backdropUrl || content.posterUrl})` }}
+        className="h-[40vh] min-h-[250px] relative bg-cover bg-center overflow-hidden"
+        style={{ backgroundImage: `url(${content.backdropUrl || content.posterUrl})` }}
       >
         <AnimatePresence>
           {!imageLoaded && (
@@ -191,7 +238,7 @@ const ContentPage = () => {
               initial={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
-              className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center"
+              className="absolute inset-0 bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-800 flex items-center justify-center"
             >
               <motion.div 
                 animate={{ rotate: 360 }}
@@ -202,294 +249,207 @@ const ContentPage = () => {
           )}
         </AnimatePresence>
         
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-black/50 to-black/20"></div>
         
-        <motion.div 
-          initial="hidden"
-          animate={imageLoaded ? "visible" : "hidden"}
-          variants={fadeIn}
-          transition={{ delay: 0.3 }}
-          className="absolute bottom-0 left-0 right-0 p-4 md:p-8"
-        >
-          <div className="max-w-4xl mx-auto">
-            <motion.h1 
-              variants={slideUp}
-              className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4 leading-tight"
-            >
-              {content.title}
-            </motion.h1>
-            
-            <motion.div 
-              variants={staggerChildren}
-              className="flex flex-wrap items-center gap-2 md:gap-4 mb-4 md:mb-6"
-            >
-              <motion.div 
-                variants={scaleUp}
-                className="flex items-center text-xs md:text-sm text-gray-200 bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-full"
-              >
-                <Calendar size={14} className="mr-1 md:size-4" />
-                {formatDate(content.releaseDate)}
-              </motion.div>
-              {content.runtime && (
-                <motion.div 
-                  variants={scaleUp}
-                  className="flex items-center text-xs md:text-sm text-gray-200 bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-full"
-                >
-                  <Clock size={14} className="mr-1 md:size-4" />
-                  {formatRuntime(content.runtime)}
-                </motion.div>
-              )}
-              <motion.div 
-                variants={scaleUp}
-                className="flex items-center text-xs md:text-sm text-gray-200 bg-white/10 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-full"
-                >
-                <Star size={14} className="text-yellow-400 mr-1 md:size-4" />
-                {content.rating || 'N/A'}
-              </motion.div>
-              <motion.span 
-                variants={scaleUp}
-                className="px-2 py-1 md:px-3 md:py-1.5 bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs md:text-sm rounded-full"
-              >
-                {content.type}
-              </motion.span>
-            </motion.div>
-
-            <motion.div 
-              variants={staggerChildren}
-              className="flex gap-2 md:gap-4"
-            >
-              <motion.button 
-                variants={scaleUp}
-                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(192, 38, 211, 0.4)" }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white rounded-lg transition-all duration-300 flex items-center touch-manipulation text-sm md:text-base"
-              >
-                <Play size={18} className="mr-1 md:mr-2 md:size-5" />
-                Watch Trailer
-              </motion.button>
-              
-              <motion.button 
-                variants={scaleUp}
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
-                whileTap={{ scale: 0.9 }}
-                onClick={toggleFavorite}
-                className="p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-lg transition-all duration-300 touch-manipulation"
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-              >
-                <motion.div
-                  animate={{ scale: isFavorite ? [1, 1.2, 1] : 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Heart 
-                    size={20} 
-                    className={`${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'} md:size-6`} 
-                  />
-                </motion.div>
-              </motion.button>
-              
-              <motion.button 
-                variants={scaleUp}
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
-                whileTap={{ scale: 0.9 }}
-                onClick={shareContent}
-                className="p-2 md:p-3 bg-white/10 backdrop-blur-md rounded-lg transition-all duration-300 relative touch-manipulation"
-                aria-label="Share content"
-              >
-                <Share size={20} className="text-white md:size-6" />
-                <AnimatePresence>
-                  {copied && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 5, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded-md"
-                    >
-                      Copied!
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            </motion.div>
-          </div>
-        </motion.div>
+        {/* Placeholder for content area */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8"></div>
       </div>
 
-      {/* Content Details */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-16 relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
-        >
-          <div className="p-4 md:p-6 lg:p-8">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="mb-6 md:mb-8"
-            >
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4 flex items-center">
-                <motion.span 
-                  initial={{ backgroundSize: "0% 100%" }}
-                  animate={{ backgroundSize: "100% 100%" }}
-                  transition={{ duration: 1, ease: "easeInOut" }}
-                  className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent bg-no-repeat bg-[length:0%_100%]"
-                >
-                  Description
-                </motion.span>
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
-                {content.description}
-              </p>
-            </motion.div>
+      {/* Main Content Details Container */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-24 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10">
+          
+          {/* Vertical Poster Column (Desktop/Tablet) - Takes up 4/12 width on large screens */}
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
+            className="md:col-span-4 lg:col-span-4 hidden md:block"
+          >
+            <div className="w-full aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border-4 border-gray-700/50 transform hover:scale-[1.02] transition-transform duration-300">
+              <img 
+                src={content.posterUrl || content.backdropUrl} 
+                alt={`${content.title} Poster`} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          </motion.div>
 
-            {content.genres && content.genres.length > 0 && (
+          {/* Details Column - Takes up 8/12 width on large screens to properly adjust beside poster */}
+          <div className="md:col-span-12 lg:col-span-8"> 
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden p-6 md:p-8 lg:p-10"
+            >
+              
+              {/* 1. Title and Metadata Section (High-Visibility) */}
+              <motion.div 
+                variants={slideUp}
+                className="mb-8 md:mb-10 pb-4 border-b border-gray-200 dark:border-gray-700"
+              >
+                 {/* Mobile Poster (Visible on small screens) */}
+                <div className="md:hidden mb-6 flex justify-center">
+                    <div className="w-48 aspect-[2/3] rounded-lg overflow-hidden shadow-xl border-2 border-gray-300 dark:border-gray-700">
+                        <img 
+                            src={content.posterUrl || content.backdropUrl} 
+                            alt={`${content.title} Poster`} 
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                        />
+                    </div>
+                </div>
+
+                <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">
+                  {content.title}
+                </h1>
+                
+                <motion.div 
+                  variants={staggerChildren}
+                  className="flex flex-wrap items-center gap-3 md:gap-4"
+                >
+                  <motion.div 
+                    variants={scaleUp}
+                    className="flex items-center text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full font-medium"
+                  >
+                    <Calendar size={16} className="mr-2 text-violet-500" />
+                    {formatDate(content.releaseDate)}
+                  </motion.div>
+                  {content.runtime && (
+                    <motion.div 
+                      variants={scaleUp}
+                      className="flex items-center text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full font-medium"
+                    >
+                      <Clock size={16} className="mr-2 text-violet-500" />
+                      {formatRuntime(content.runtime)}
+                    </motion.div>
+                  )}
+                  <motion.div 
+                    variants={scaleUp}
+                    className="flex items-center text-sm text-gray-900 bg-yellow-400 px-3 py-1.5 rounded-full font-extrabold"
+                    >
+                    <Star size={16} className="text-gray-900 mr-2" />
+                    {content.rating || 'N/A'}
+                  </motion.div>
+                  <motion.span 
+                    variants={scaleUp}
+                    className="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm rounded-full font-bold"
+                  >
+                    {content.type}
+                  </motion.span>
+                </motion.div>
+              </motion.div>
+
+              {/* 2. Synopsis Section */}
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="mb-6 md:mb-8"
+                className="mb-8 md:mb-10"
               >
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4">
-                  <motion.span 
-                    initial={{ backgroundSize: "0% 100%" }}
-                    animate={{ backgroundSize: "100% 100%" }}
-                    transition={{ duration: 1, ease: "easeInOut", delay: 0.2 }}
-                    className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent bg-no-repeat bg-[length:0%_100%]"
+                <h2 className="text-2xl font-extrabold mb-4">
+                  <span 
+                    className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent"
                   >
-                    Genres
-                  </motion.span>
+                    Synopsis
+                  </span>
                 </h2>
-                <div className="flex flex-wrap gap-2">
-                  {content.genres.map((genre, index) => (
-                    <motion.span
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.8 + (index * 0.1) }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-100 rounded-full text-xs md:text-sm font-medium transition-all cursor-pointer"
-                    >
-                      {genre}
-                    </motion.span>
-                  ))}
-                </div>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
+                  {content.description}
+                </p>
               </motion.div>
-            )}
 
-            {content.cast && content.cast.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="mb-6 md:mb-8"
-              >
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3 md:mb-4">
-                  <motion.span 
-                    initial={{ backgroundSize: "0% 100%" }}
-                    animate={{ backgroundSize: "100% 100%" }}
-                    transition={{ duration: 1, ease: "easeInOut", delay: 0.3 }}
-                    className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent bg-no-repeat bg-[length:0%_100%]"
-                  >
-                    Cast
-                  </motion.span>
-                </h2>
-                <div className="flex flex-wrap gap-2 md:gap-3">
-                  {content.cast.map((actor, index) => (
-                    <motion.span
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.9 + (index * 0.1) }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className="px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 text-blue-800 dark:text-blue-100 rounded-full text-xs md:text-sm font-medium transition-all cursor-pointer"
+              {/* 3. Genres Section */}
+              {content.genres && content.genres.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="mb-8 md:mb-10"
+                >
+                  <h2 className="text-2xl font-extrabold mb-4">
+                    <span 
+                      className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent"
                     >
-                      {actor}
-                    </motion.span>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+                      Genres
+                    </span>
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {content.genres.map((genre, index) => (
+                      <motion.span
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.8 + (index * 0.1) }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        className="px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-100 rounded-full text-sm font-semibold transition-all cursor-pointer shadow-sm"
+                      >
+                        {genre}
+                      </motion.span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
-            {content.availability && content.availability.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-              >
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6">
-                  <motion.span 
-                    initial={{ backgroundSize: "0% 100%" }}
-                    animate={{ backgroundSize: "100% 100%" }}
-                    transition={{ duration: 1, ease: "easeInOut", delay: 0.4 }}
-                    className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent bg-no-repeat bg-[length:0%_100%]"
-                  >
-                    Download Options
-                  </motion.span>
-                </h2>
-                <div className="space-y-3 md:space-y-4">
-                  {content.availability.map((option, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1 + (index * 0.1) }}
-                      whileHover={{ y: -3 }}
-                      className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-5 transition-all duration-300 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 hover:border-violet-300 dark:hover:border-violet-500 hover:shadow-lg"
+              {/* 4. Cast Section */}
+              {content.cast && content.cast.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <h2 className="text-2xl font-extrabold mb-4">
+                    <span 
+                      className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent"
                     >
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-base md:text-lg text-gray-900 dark:text-white">{option.label}</h3>
-                          <div className="flex flex-wrap items-center text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-2 gap-2">
-                            {option.sourceType === 'TelegramBot' && 
-                              <div className="flex items-center bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded-md">
-                                <Globe size={12} className="mr-1 text-blue-600 dark:text-blue-300 md:size-3.5" />
-                                <span className="text-blue-600 dark:text-blue-300">Telegram</span>
-                              </div>
-                            }
-                            {option.sourceType === 'SelfHosted' && 
-                              <div className="flex items-center bg-green-100 dark:bg-green-900 px-2 py-1 rounded-md">
-                                <HardDrive size={12} className="mr-1 text-green-600 dark:text-green-300 md:size-3.5" />
-                                <span className="text-green-600 dark:text-green-300">Self-Hosted</span>
-                              </div>
-                            }
-                            <span className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-md">{option.language}</span>
-                            <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-md">
-                              {option.quality || 'Unknown quality'}
-                            </span>
-                            {option.size && (
-                              <span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-2 py-1 rounded-md">
-                                {option.size}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <motion.a
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          href={option.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-pink-500 to-violet-500 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-violet-500/30 text-sm md:text-base mt-3 md:mt-0 touch-manipulation w-full md:w-auto justify-center"
-                        >
-                          <Download size={16} className="mr-1 md:mr-2 md:size-4" />
-                          Download
-                        </motion.a>
-                      </div>
-                      {option.licenseNote && (
-                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-3 p-2 md:p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                          {option.licenseNote}
-                        </p>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+                      Starring Cast
+                    </span>
+                  </h2>
+                  <div className="flex flex-wrap gap-2 md:gap-3">
+                    {content.cast.map((actor, index) => (
+                      <motion.span
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.9 + (index * 0.1) }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 text-blue-800 dark:text-blue-100 rounded-full text-sm font-semibold transition-all cursor-pointer shadow-sm"
+                      >
+                        {actor}
+                      </motion.span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
+        
+        {/* Download Options Section */}
+        {content.availability && content.availability.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-8 md:mt-12"
+          >
+            <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-6 md:mb-8 text-center">
+              <span 
+                className="bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent"
+              >
+                📥 Premium Download Options
+              </span>
+            </h2>
+            <div className="space-y-4 md:space-y-6">
+              {content.availability.map((option, index) => (
+                <DownloadCard key={index} option={option} index={index} />
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   ); 

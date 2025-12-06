@@ -5,7 +5,7 @@ import { RefreshCw, Search, Globe, Download, Save, AlertCircle, ExternalLink, Pa
 
 const UrlManager = () => {
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('https://t.me/ArcXzone2_bot');
+  const [searchTerm, setSearchTerm] = useState('https://t.me/ArcXzone_bot');
   const [replaceTerm, setReplaceTerm] = useState('');
   const [results, setResults] = useState([]);
   const [affectedCount, setAffectedCount] = useState(0);
@@ -415,7 +415,7 @@ const UrlManager = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="https://t.me/ArcXzone2_bot"
+              placeholder="https://t.me/ArcXzone_bot"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               The current bot URL to be replaced
@@ -492,7 +492,7 @@ const UrlManager = () => {
           
           <button
             onClick={() => {
-              setSearchTerm('https://t.me/ArcXzone2_bot');
+              setSearchTerm('https://t.me/ArcXzone_bot');
               setReplaceTerm('');
             }}
             className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"

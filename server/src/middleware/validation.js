@@ -33,6 +33,33 @@ const adminLoginSchema = Joi.object({
   password: Joi.string().min(6).required()
 });
 
+// NEW: Request create schema (for public users)
+const requestCreateSchema = Joi.object({
+  contentName: Joi.string().trim().required(),
+  yearOfRelease: Joi.number()
+    .integer()
+    .min(1888)
+    .max(new Date().getFullYear() + 5)
+    .required(),
+  requestedBy: Joi.string().trim().required(),
+  contentType: Joi.string().valid('movie', 'webseries', 'anime').required(),
+  priority: Joi.string().valid('low', 'medium', 'high').default('medium'),
+});
+
+// NEW: Request update schema (for admins only)
+const requestUpdateSchema = Joi.object({
+  contentName: Joi.string().trim(),
+  yearOfRelease: Joi.number()
+    .integer()
+    .min(1888)
+    .max(new Date().getFullYear() + 5),
+  requestedBy: Joi.string().trim(),
+  contentType: Joi.string().valid('movie', 'webseries', 'anime'),
+  status: Joi.string().valid('pending', 'approved', 'rejected', 'duplicate', 'fulfilled'),
+  priority: Joi.string().valid('low', 'medium', 'high'),
+  adminNotes: Joi.string().allow('', null),
+}).min(1); // at least one field
+
 const validate = (schema) => (req, res, next) => {
   const { error } = schema.validate(req.body);
   if (error) {
@@ -41,9 +68,10 @@ const validate = (schema) => (req, res, next) => {
   next();
 };
 
-
 module.exports = {
   validateContent: validate(contentSchema),
   validateAvailability: validate(availabilitySchema),
-  validateAdminLogin: validate(adminLoginSchema)
+  validateAdminLogin: validate(adminLoginSchema),
+  validateRequestCreate: validate(requestCreateSchema),
+  validateRequestUpdate: validate(requestUpdateSchema),
 };

@@ -1,7 +1,7 @@
 // src/components/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { contentAPI } from '../../services/api';
-import { Film, Tv, Activity, Users } from 'lucide-react';
+import { Film, Tv, Activity } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({

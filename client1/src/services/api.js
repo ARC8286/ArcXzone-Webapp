@@ -2,6 +2,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://arcxzone-webapp.onrender.com/api';
+console.log(API_BASE_URL)
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -90,6 +91,24 @@ export const userAPI = {
   addToWatched: (contentId) => api.post('/users/watched', { contentId }),
   getPreferences: () => api.get('/users/preferences'),
   updatePreferences: (data) => api.put('/users/preferences', data),
+};
+
+// src/services/api.js - Add these to the existing file
+export const requestAPI = {
+  // Create a new request (public)
+  create: (data) => api.post('/requests', data),
+  
+  // Get all requests (admin only)
+  getAll: (params) => api.get('/requests', { params }),
+  
+  // Get request by ID (admin only)
+  getById: (id) => api.get(`/requests/${id}`),
+  
+  // Update request (admin only)
+  update: (id, data) => api.patch(`/requests/${id}`, data),
+  
+  // Delete request (admin only)
+  delete: (id) => api.delete(`/requests/${id}`),
 };
 
 export default api;

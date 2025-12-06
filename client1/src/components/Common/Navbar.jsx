@@ -1,16 +1,17 @@
 // src/components/Common/Navbar.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Sun, Moon, LogOut, Film, Menu, X } from 'lucide-react';
+import { Sun, Moon, LogOut, Film, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
   const { isAuthenticated, isAdmin, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -25,11 +26,11 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    setIsMenuOpen(false);
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  // ✅ Single handler so redirect works same everywhere
+  const handleRequestContentClick = () => {
+    navigate('/request-content');
   };
 
   // Custom ArcXzone Logo Component
@@ -179,23 +180,6 @@ const Navbar = () => {
     })
   };
 
-  const mobileMenuVariants = {
-    closed: {
-      opacity: 0,
-      height: 0,
-      transition: {
-        duration: 0.3
-      }
-    },
-    open: {
-      opacity: 1,
-      height: "auto",
-      transition: {
-        duration: 0.3
-      }
-    }
-  };
-
   return (
     <motion.nav 
       className={`sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md transition-all duration-300 ${scrolled ? 'shadow-lg' : 'shadow-md'}`}
@@ -219,8 +203,23 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Request Content Button (Desktop) */}
             <motion.div
               custom={0}
+              variants={itemVariants}
+            >
+              <button
+                type="button"
+                onClick={handleRequestContentClick}
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-md hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
+              >
+                <Send size={16} className="mr-2" />
+                Request Content
+              </button>
+            </motion.div>
+
+            <motion.div
+              custom={1}
               variants={itemVariants}
             >
               <ThemeToggleButton />
@@ -228,7 +227,7 @@ const Navbar = () => {
 
             {isAuthenticated && isAdmin && location.pathname !== '/admin' && (
               <motion.div
-                custom={1}
+                custom={2}
                 variants={itemVariants}
               >
                 <Link
@@ -246,7 +245,7 @@ const Navbar = () => {
                 className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                custom={2}
+                custom={3}
                 variants={itemVariants}
               >
                 <LogOut size={20} />
@@ -254,27 +253,41 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Navigation */}
-          <div className="md:hidden flex items-center space-x-4">
+          {/* Mobile Navigation (No Menu, Proper Buttons) */}
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Request Content Button (Mobile with text) */}
+            <button
+              type="button"
+              onClick={handleRequestContentClick}
+              className="flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-md hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
+            >
+              <Send size={16} className="mr-1.5" />
+              <span>Request</span>
+            </button>
+
             <ThemeToggleButton />
-            
+
             {isAuthenticated && isAdmin && location.pathname !== '/admin' && (
-              <Link
-                to="/admin"
-                className="p-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+              <button
+                type="button"
+                onClick={() => navigate('/admin')}
+                className="flex items-center px-2 py-1.5 text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
               >
-                <Film size={20} />
-              </Link>
+                <Film size={16} className="mr-1" />
+                <span>Admin</span>
+              </button>
             )}
 
             {isAuthenticated && (
               <motion.button
+                type="button"
                 onClick={handleLogout}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                className="flex items-center px-2 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-500/60 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <LogOut size={20} />
+                <LogOut size={16} className="mr-1" />
+                <span>Sign Out</span>
               </motion.button>
             )}
           </div>

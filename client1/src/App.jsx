@@ -1,3 +1,4 @@
+// src/App.jsx - Updated Router
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -7,6 +8,7 @@ import HomePage from './pages/HomePage';
 import ContentPage from './pages/ContentPage';
 import ViewAllPage from './pages/ViewAllPage';
 import Login from './pages/Login';
+import RequestPage from './pages/RequestPage'; // NEW
 import Navbar from './components/Common/Navbar';
 import ProtectedRoute from './components/Common/ProtectedRoute';
 
@@ -22,12 +24,13 @@ function App() {
               <Route path="/content/:id" element={<ContentPage />} />
               <Route path="/content" element={<ViewAllPage />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/request-content" element={<RequestPage />} /> {/* NEW */}
               
               {/* Admin Routes with Protection */}
               <Route 
                 path="/admin/*" 
                 element={
-                  <ProtectedRoute requireAdmin={true}>
+                  <ProtectedRoute>
                     <AdminPanel />
                   </ProtectedRoute>
                 } 

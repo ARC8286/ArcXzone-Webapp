@@ -13,6 +13,7 @@ const { NODE_ENV, CORS_ORIGIN } = require('./config/env');
 const adminRoutes = require('./routes/adminRoutes');
 const contentRoutes = require('./routes/contentRoutes');
 const availabilityRoutes = require('./routes/availabilityRoutes');
+const requestRoutes = require('./routes/requestRoutes');
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', adminRoutes);
+app.use('/api/requests', requestRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/content', availabilityRoutes);
 

@@ -4,18 +4,17 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Plus, 
-  List, 
-  BarChart3,
-  Settings,
-  LogOut,
-  Globe
+  List,
+  Globe,
+  Inbox,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from '../components/Admin/AdminDashboard';
 import ContentForm from '../components/Admin/ContentForm';
 import ContentList from '../components/Admin/ContentList';
-import UrlManager from '../components/Admin/UrlManager'; // Import the UrlManager component
-
+import UrlManager from '../components/Admin/UrlManager';
+import RequestManager from '../components/Admin/RequestManager';
 
 const AdminPanel = () => {
   const { logout } = useAuth();
@@ -25,9 +24,8 @@ const AdminPanel = () => {
     { name: 'Dashboard', href: '/admin', icon: Home },
     { name: 'Add Content', href: '/admin/add-content', icon: Plus },
     { name: 'Manage Content', href: '/admin/content', icon: List },
-    { name: 'URL Manager', href: '/admin/url-manager', icon: Globe }, // Added URL Manager
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Request Manager', href: '/admin/requests', icon: Inbox },
+    { name: 'URL Manager', href: '/admin/url-manager', icon: Globe },
   ];
 
   return (
@@ -82,9 +80,8 @@ const AdminPanel = () => {
                 <Route path="/add-content" element={<ContentForm />} />
                 <Route path="/content" element={<ContentList />} />
                 <Route path="/edit-content/:id" element={<ContentForm />} />
-                <Route path="/url-manager" element={<UrlManager />} /> {/* Added URL Manager route */}
-                <Route path="/analytics" element={<div className="p-6">Analytics Coming Soon</div>} />
-                <Route path="/settings" element={<div className="p-6">Settings Coming Soon</div>} />
+                <Route path="/requests" element={<RequestManager />} />
+                <Route path="/url-manager" element={<UrlManager />} />
               </Routes>
             </div>
           </div>

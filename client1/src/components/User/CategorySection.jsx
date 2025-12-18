@@ -1,14 +1,15 @@
 // src/components/User/CategorySection.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { contentAPI } from '../../services/api';
 import ContentCard from '../Common/ContentCard';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 const CategorySection = () => {
   const [content, setContent] = useState({
     latest: [],
+    requested: [], // Moved to second position
     movie: [],
     webseries: [],
     anime: []
@@ -16,29 +17,40 @@ const CategorySection = () => {
   const [loading, setLoading] = useState(true);
   const [showArrows, setShowArrows] = useState({
     latest: { left: false, right: true },
+    requested: { left: false, right: true }, // Moved to second position
     movie: { left: false, right: true },
     webseries: { left: false, right: true },
     anime: { left: false, right: true }
   });
   const containerRefs = useRef({
     latest: null,
+    requested: null, // Moved to second position
     movie: null,
     webseries: null,
     anime: null
   });
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const [latest, movies, webseries, anime] = await Promise.all([
+        const [latest, movies, webseries, anime, requested] = await Promise.all([
           contentAPI.getAll({ limit: 1200, sort: '-releaseDate' }), // Latest content sorted by release date
           contentAPI.getAll({ type: 'movie', limit: 1200 }),
           contentAPI.getAll({ type: 'webseries', limit: 1200 }),
-          contentAPI.getAll({ type: 'anime', limit: 1200 })
+          contentAPI.getAll({ type: 'anime', limit: 1200 }),
+          contentAPI.getAll({ limit: 1200 }) // Fetch all content to filter by slug
         ]);
+
+        // Filter content where slug starts with "request"
+        const requestedContent = requested.data.contents.filter(item => 
+          item.slug && item.slug.toLowerCase().startsWith('request')
+        );
 
         setContent({
           latest: latest.data.contents,
+          requested: requestedContent, // Set filtered requested content
           movie: movies.data.contents,
           webseries: webseries.data.contents,
           anime: anime.data.contents
@@ -92,6 +104,11 @@ const CategorySection = () => {
     }
   };
 
+  const handleRequestContent = () => {
+    // Navigate to the request content page
+    navigate('/request-content'); // Change this to your actual request content page route
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -102,14 +119,26 @@ const CategorySection = () => {
     );
   }
 
+  // Define categories in the desired order
+  const categories = [
+    { type: 'latest', title: 'Latest Releases', data: content.latest },
+    { type: 'movie', title: 'Movies', data: content.movie },
+    { type: 'webseries', title: 'Web Series', data: content.webseries },
+    { type: 'anime', title: 'Anime', data: content.anime }
+  ];
+
+  // Insert requested section at position 1 (second position) if there are requested items
+  if (content.requested.length > 0) {
+    categories.splice(1, 0, { 
+      type: 'requested', 
+      title: 'Requested Content', 
+      data: content.requested 
+    });
+  }
+
   return (
     <div className="w-full px-0 py-6 md:py-10 relative z-0">
-      {[
-        { type: 'latest', title: 'Latest Releases', data: content.latest },
-        { type: 'movie', title: 'Movies', data: content.movie },
-        { type: 'webseries', title: 'Web Series', data: content.webseries },
-        { type: 'anime', title: 'Anime', data: content.anime }
-      ].map((category) => (
+      {categories.map((category) => (
         <motion.div 
           key={category.type}
           initial={{ opacity: 0, y: 20 }}
@@ -121,18 +150,31 @@ const CategorySection = () => {
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
               {category.title}
             </h2>
-            <Link
-              to={`/content?type=${category.type}`}
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center text-sm md:text-base"
-            >
-              View All
-              <ChevronRight size={18} className="ml-1" />
-            </Link>
+            
+            {category.type !== 'requested' ? (
+              // View All link for other categories
+              <Link
+                to={`/content?type=${category.type}`}
+                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center text-sm md:text-base transition-colors"
+              >
+                View All
+                <ChevronRight size={18} className="ml-1" />
+              </Link>
+            ) : (
+              // Request Content button for requested section
+              <button
+                onClick={handleRequestContent}
+                className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium flex items-center px-4 py-2 rounded-lg text-sm md:text-base transition-colors shadow-md hover:shadow-lg"
+              >
+                <Plus size={18} className="mr-2" />
+                Request Content
+              </button>
+            )}
           </div>
           
           <div className="relative">
             {/* Left Arrow */}
-            {showArrows[category.type].left && (
+            {showArrows[category.type]?.left && (
               <button 
                 onClick={() => handleScroll(category.type, 'left')}
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm transition-all"
@@ -143,7 +185,7 @@ const CategorySection = () => {
             )}
             
             {/* Right Arrow */}
-            {showArrows[category.type].right && (
+            {showArrows[category.type]?.right && (
               <button 
                 onClick={() => handleScroll(category.type, 'right')}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm transition-all"
@@ -181,7 +223,7 @@ const CategorySection = () => {
                   ))
                 ) : (
                   <div className="w-full py-8 md:py-12 text-center text-gray-500 dark:text-gray-400">
-                    No {category.type} content available
+                    No {category.title.toLowerCase()} available
                   </div>
                 )}
               </div>

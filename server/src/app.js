@@ -41,8 +41,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
 // Rate limiting
-app.use('/api', apiLimiter);
+// Rate Limiting (optimized)
+app.use('/api/auth', apiLimiter);
+app.use('/api/requests', apiLimiter);
 app.use('/api/content/search', searchLimiter);
+
 
 // Root route
 app.get('/', (req, res) => {

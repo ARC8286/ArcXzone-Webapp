@@ -36,11 +36,11 @@ const CategorySection = () => {
     const fetchContent = async () => {
       try {
         const [latest, movies, webseries, anime, requested] = await Promise.all([
-          contentAPI.getAll({ limit: 1200, sort: '-releaseDate' }), // Latest content sorted by release date
-          contentAPI.getAll({ type: 'movie', limit: 1200 }),
-          contentAPI.getAll({ type: 'webseries', limit: 1200 }),
-          contentAPI.getAll({ type: 'anime', limit: 1200 }),
-          contentAPI.getAll({ limit: 1200 }) // Fetch all content to filter by slug
+          contentAPI.getAll({ limit: 20, sort: '-releaseDate' }), // Latest content sorted by release date
+          contentAPI.getAll({ type: 'movie', limit: 20 }),
+          contentAPI.getAll({ type: 'webseries', limit: 20 }),
+          contentAPI.getAll({ type: 'anime', limit: 20 }),
+          contentAPI.getAll({ limit: 20, sort: '-createdAt' }) // Fetch all content to filter by slug
         ]);
 
         // Filter content where slug starts with "request"
@@ -151,25 +151,36 @@ const CategorySection = () => {
               {category.title}
             </h2>
             
-            {category.type !== 'requested' ? (
-              // View All link for other categories
-              <Link
-                to={`/content?type=${category.type}`}
-                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center text-sm md:text-base transition-colors"
-              >
-                View All
-                <ChevronRight size={18} className="ml-1" />
-              </Link>
-            ) : (
-              // Request Content button for requested section
-              <button
-                onClick={handleRequestContent}
-                className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium flex items-center px-4 py-2 rounded-lg text-sm md:text-base transition-colors shadow-md hover:shadow-lg"
-              >
-                <Plus size={18} className="mr-2" />
-                Request Content
-              </button>
-            )}
+            <div className="flex items-center space-x-2">
+              {category.type !== 'requested' ? (
+                // View All link for other categories
+                <Link
+                  to={`/content?type=${category.type}`}
+                  className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center text-sm md:text-base transition-colors"
+                >
+                  View All
+                  <ChevronRight size={18} className="ml-1" />
+                </Link>
+              ) : (
+                // For requested section: View All + Request Content
+                <>
+                  <Link
+                    to="/content?type=requested"
+                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center text-sm md:text-base transition-colors mr-2"
+                  >
+                    View All
+                    <ChevronRight size={18} className="ml-1" />
+                  </Link>
+                  <button
+                    onClick={handleRequestContent}
+                    className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors shadow-md hover:shadow-lg"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Request
+                  </button>
+                </>
+              )}
+            </div>
           </div>
           
           <div className="relative">

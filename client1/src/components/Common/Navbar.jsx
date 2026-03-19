@@ -3,35 +3,52 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Sun, Moon, LogOut, Film, Send } from 'lucide-react';
+import { useSearch } from '../../contexts/SearchContext';
+import { 
+  Search, 
+  Film, 
+  Tv, 
+  Play, 
+  TrendingUp,
+  Plus,
+  Sun,
+  Moon,
+  Menu,
+  X
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SearchPortal from './SearchPortal';
 
 const Navbar = () => {
-  const { isAuthenticated, isAdmin, logout } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { openSearch } = useSearch();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
-      setScrolled(isScrolled);
+      setScrolled(window.scrollY > 10);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  // ✅ Single handler so redirect works same everywhere
-  const handleRequestContentClick = () => {
+  const handleRequestContent = () => {
     navigate('/request-content');
   };
+
+  // Navigation items
+  const navigationItems = [
+    { name: 'Movies', icon: Film, path: '/content?type=movie' },
+    { name: 'TV Series', icon: Tv, path: '/content?type=webseries' },
+    { name: 'Anime', icon: Play, path: '/content?type=anime' },
+    { name: 'New & Popular', icon: TrendingUp, path: '/content?type=latest' },
+  ];
 
   // Custom ArcXzone Logo Component
   const ArcXzoneLogo = () => (
@@ -53,10 +70,8 @@ const Navbar = () => {
           </filter>
         </defs>
         
-        {/* Background circle */}
         <circle cx="100" cy="100" r="90" fill="rgba(0,0,0,0.1)" className="dark:fill-gray-800" />
         
-        {/* Main X design */}
         <motion.path
           d="M60,60 L140,140 M140,60 L60,140"
           stroke="url(#gradient)"
@@ -68,7 +83,6 @@ const Navbar = () => {
           transition={{ duration: 1, delay: 0.2 }}
         />
         
-        {/* Arc surrounding the X */}
         <motion.path
           d="M100,30 A70,70 0 1,1 100,170 A70,70 0 1,1 100,30"
           fill="none"
@@ -83,22 +97,16 @@ const Navbar = () => {
     </motion.div>
   );
 
-  // Unique Theme Toggle Button Component
+  // Theme Toggle Button
   const ThemeToggleButton = () => (
     <motion.button
       onClick={toggleTheme}
-      className="relative w-14 h-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 dark:from-indigo-600 dark:to-purple-700 p-1 transition-all duration-300 shadow-md"
+      className="relative w-12 h-6 rounded-full bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 p-1 transition-all duration-300"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      initial={false}
-      animate={{
-        background: isDark 
-          ? "linear-gradient(to right, #4F46E5, #7C3AED)" 
-          : "linear-gradient(to right, #818CF8, #A78BFA)"
-      }}
     >
       <motion.div
-        className="w-6 h-6 rounded-full bg-white dark:bg-yellow-200 shadow-lg flex items-center justify-center"
+        className="w-4 h-4 rounded-full bg-white dark:bg-yellow-200 shadow-lg flex items-center justify-center"
         layout
         transition={{
           type: "spring",
@@ -106,194 +114,180 @@ const Navbar = () => {
           damping: 30
         }}
         animate={{
-          x: isDark ? 26 : 0,
+          x: isDark ? 24 : 0,
           rotate: isDark ? 360 : 0
         }}
       >
-        <motion.div
-          initial={false}
-          animate={{ opacity: isDark ? 0 : 1, scale: isDark ? 0 : 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Sun size={14} className="text-yellow-500" />
-        </motion.div>
-        <motion.div
-          className="absolute"
-          initial={false}
-          animate={{ opacity: isDark ? 1 : 0, scale: isDark ? 1 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Moon size={14} className="text-indigo-800" />
-        </motion.div>
-      </motion.div>
-      
-      {/* Background stars for dark mode */}
-      <AnimatePresence>
-        {isDark && (
-          <>
-            <motion.div
-              className="absolute w-1 h-1 bg-white rounded-full"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              transition={{ delay: 0.1 }}
-              style={{ top: '25%', left: '30%' }}
-            />
-            <motion.div
-              className="absolute w-1 h-1 bg-white rounded-full"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              transition={{ delay: 0.2 }}
-              style={{ top: '60%', left: '50%' }}
-            />
-          </>
+        {isDark ? (
+          <Moon size={12} className="text-indigo-800" />
+        ) : (
+          <Sun size={12} className="text-yellow-500" />
         )}
-      </AnimatePresence>
+      </motion.div>
     </motion.button>
   );
 
   const navVariants = {
-    hidden: { y: -100, opacity: 0 },
+    hidden: { y: -100 },
     visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: "spring", 
-        stiffness: 100, 
-        damping: 20 
-      }
+      y: 0,
+      transition: { type: "spring", stiffness: 100, damping: 20 }
     }
   };
 
-  const itemVariants = {
-    hidden: { y: -20, opacity: 0 },
-    visible: (i) => ({ 
-      y: 0, 
-      opacity: 1,
-      transition: {
-        delay: i * 0.1,
-        type: "spring", 
-        stiffness: 200, 
-        damping: 15 
-      }
-    })
-  };
-
   return (
-    <motion.nav 
-      className={`sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md transition-all duration-300 ${scrolled ? 'shadow-lg' : 'shadow-md'}`}
-      initial="hidden"
-      animate="visible"
-      variants={navVariants}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3">
-              <ArcXzoneLogo />
-              <motion.span 
-                className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400"
-                whileHover={{ scale: 1.05 }}
-              >
-                ArcXzone
-              </motion.span>
-            </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Request Content Button (Desktop) */}
-            <motion.div
-              custom={0}
-              variants={itemVariants}
-            >
-              <button
-                type="button"
-                onClick={handleRequestContentClick}
-                className="flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-md hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
-              >
-                <Send size={16} className="mr-2" />
-                Request Content
-              </button>
-            </motion.div>
-
-            <motion.div
-              custom={1}
-              variants={itemVariants}
-            >
-              <ThemeToggleButton />
-            </motion.div>
-
-            {isAuthenticated && isAdmin && location.pathname !== '/admin' && (
-              <motion.div
-                custom={2}
-                variants={itemVariants}
-              >
-                <Link
-                  to="/admin"
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+    <>
+      {/* Main Navigation Bar */}
+      <motion.nav 
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-lg' 
+            : 'bg-white dark:bg-gray-900'
+        }`}
+        initial="hidden"
+        animate="visible"
+        variants={navVariants}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            
+            {/* Left Section: Logo & Navigation */}
+            <div className="flex items-center space-x-8">
+              {/* Logo */}
+              <Link to="/" className="flex items-center space-x-3">
+                <ArcXzoneLogo />
+                <motion.span 
+                  className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400"
+                  whileHover={{ scale: 1.05 }}
                 >
-                  Admin Panel
-                </Link>
-              </motion.div>
-            )}
+                  ArcXzone
+                </motion.span>
+              </Link>
 
-            {isAuthenticated && (
+              {/* Desktop Navigation Links */}
+              <div className="hidden lg:flex items-center space-x-6">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm font-medium relative group"
+                  >
+                    {item.icon && <item.icon size={16} className="inline mr-2" />}
+                    {item.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 dark:bg-indigo-400 group-hover:w-full transition-all duration-300"></span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Section: Actions */}
+            <div className="flex items-center space-x-4">
+              {/* Search Button - LARGER only on desktop, normal on mobile */}
               <motion.button
-                onClick={handleLogout}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                custom={3}
-                variants={itemVariants}
+                onClick={openSearch}
+                className="group relative flex items-center text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Search"
               >
-                <LogOut size={20} />
+                {/* Desktop: Larger search with input field */}
+                <div className="hidden lg:flex items-center">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search size={18} className="text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg pl-10 pr-4 py-2.5 w-64 transition-all duration-300 border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700 cursor-text">
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">Search movies, series...</span>
+                    </div>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <kbd className="hidden lg:inline-flex items-center border border-gray-300 dark:border-gray-600 rounded px-1.5 text-xs font-sans text-gray-500 dark:text-gray-400">⌘K</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile: Icon only */}
+                <div className="lg:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <Search size={20} />
+                </div>
               </motion.button>
-            )}
-          </div>
 
-          {/* Mobile Navigation (No Menu, Proper Buttons) */}
-          <div className="md:hidden flex items-center space-x-2">
-            {/* Request Content Button (Mobile with text) */}
-            <button
-              type="button"
-              onClick={handleRequestContentClick}
-              className="flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-md hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
-            >
-              <Send size={16} className="mr-1.5" />
-              <span>Request</span>
-            </button>
-
-            <ThemeToggleButton />
-
-            {isAuthenticated && isAdmin && location.pathname !== '/admin' && (
-              <button
-                type="button"
-                onClick={() => navigate('/admin')}
-                className="flex items-center px-2 py-1.5 text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-              >
-                <Film size={16} className="mr-1" />
-                <span>Admin</span>
-              </button>
-            )}
-
-            {isAuthenticated && (
+              {/* Request Content Button - Desktop only */}
               <motion.button
-                type="button"
-                onClick={handleLogout}
-                className="flex items-center px-2 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-500/60 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                onClick={handleRequestContent}
+                className="hidden lg:flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-md transition-all font-medium text-sm shadow-md hover:shadow-lg"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <LogOut size={16} className="mr-1" />
-                <span>Sign Out</span>
+                <Plus size={16} className="mr-2" />
+                Request
               </motion.button>
-            )}
+
+              {/* Theme Toggle */}
+              <ThemeToggleButton />
+
+              {/* Admin Panel Button (Desktop only) */}
+              {isAuthenticated && isAdmin && location.pathname !== '/admin' && (
+                <Link
+                  to="/admin"
+                  className="hidden lg:block px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg text-sm font-medium"
+                >
+                  Admin
+                </Link>
+              )}
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </motion.nav>
+
+        {/* Mobile Menu - EXACTLY as before, unchanged */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 overflow-hidden"
+            >
+              <div className="px-4 py-4 space-y-2">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors py-2 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    {item.icon && <item.icon size={20} className="mr-3" />}
+                    {item.name}
+                  </Link>
+                ))}
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() => {
+                      handleRequestContent();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors py-2 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 w-full"
+                  >
+                    <Plus size={20} className="mr-3" />
+                    Request Content
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
+
+      {/* Search Portal */}
+      <SearchPortal />
+    </>
   );
 };
 

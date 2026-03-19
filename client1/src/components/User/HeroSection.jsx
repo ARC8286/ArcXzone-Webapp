@@ -1,169 +1,302 @@
 // src/components/User/HeroSection.jsx
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import SearchBar from '../Common/SearchBar';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Play, Download, Volume2, VolumeX, ChevronLeft, ChevronRight, Star, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { contentAPI } from '../../services/api';
+import ReactPlayer from 'react-player';
+import { useNavigate } from 'react-router-dom';
 
-const HeroSection = ({ onSearch }) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+const HeroSection = () => {
+  const [featuredContent, setFeaturedContent] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false); // pause auto-rotate on hover
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100,
-      });
+    const fetchFeaturedContent = async () => {
+      try {
+        const response = await contentAPI.getAll({ limit: 10, sort: '-rating' });
+        setFeaturedContent(response.data.contents);
+      } catch (error) {
+        console.error('Failed to fetch featured content:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    fetchFeaturedContent();
   }, []);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.2
-      }
+  // Auto-rotate featured content — pauses when user hovers
+  useEffect(() => {
+    if (featuredContent.length > 1 && !isPaused) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % featuredContent.length);
+      }, 6000);
+      return () => clearInterval(interval);
     }
+  }, [featuredContent.length, isPaused]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + featuredContent.length) % featuredContent.length);
+  }, [featuredContent.length]);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % featuredContent.length);
+  }, [featuredContent.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === 'ArrowRight') handleNext();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handlePrev, handleNext]);
+
+  const formatRuntime = (minutes) => {
+    if (!minutes) return '';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: [0.25, 0.1, 0.25, 1]
-      }
-    }
-  };
+  const handlePlayClick = (id) => navigate(`/content/${id}`);
 
-  return (
-    <div className="relative min-h-[50vh] sm:min-h-[60vh] overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-      {/* Animated Background */}
-      <motion.div 
-        className="absolute inset-0"
-        style={{
-          background: `
-            radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, 
-            rgba(99, 102, 241, 0.5) 0%, 
-            rgba(147, 51, 234, 0.3) 35%, 
-            rgba(219, 39, 119, 0.2) 70%, 
-            transparent 100%)
-          `
-        }}
-        animate={{
-          background: [
-            `radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.5) 0%, rgba(147, 51, 234, 0.3) 35%, rgba(219, 39, 119, 0.2) 70%, transparent 100%)`,
-            `radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.5) 0%, rgba(147, 51, 234, 0.3) 35%, rgba(219, 39, 119, 0.2) 70%, transparent 100%)`,
-            `radial-gradient(circle at 40% 80%, rgba(99, 102, 241, 0.5) 0%, rgba(147, 51, 234, 0.3) 35%, rgba(219, 39, 119, 0.2) 70%, transparent 100%)`,
-          ]
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          repeatType: "reverse",
-          ease: "easeInOut"
-        }}
-      />
+  // Download navigates to the content detail page (same as original "More Info")
+  const handleDownloadClick = (id) => navigate(`/content/${id}`);
 
-      {/* Additional Blur Overlay */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
-
-      {/* Content Container */}
-      <div className="relative z-10 flex items-center justify-center min-h-[50vh] sm:min-h-[60vh] w-full">
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-4 sm:space-y-6 w-full"
-          >
-            {/* Main Heading */}
-            <motion.div variants={itemVariants} className="space-y-2 w-full">
-              <motion.h1
-                className="text-2xl sm:text-3xl md:text-4xl font-bold text-white 
-                         leading-tight break-words px-2"
-                style={{
-                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                  wordBreak: 'break-word',
-                  hyphens: 'auto'
-                }}
-              >
-                <span className="block">Discover Amazing Content</span>
-              </motion.h1>
-
-              <motion.div
-                className="h-1 w-16 sm:w-24 bg-gradient-to-r from-yellow-400 via-pink-400 to-cyan-400 
-                         mx-auto rounded-full"
-                animate={{
-                  scaleX: [0.5, 1, 0.5],
-                  opacity: [0.7, 1, 0.7]
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-            </motion.div>
-
-            {/* Subheading */}
-            <motion.div variants={itemVariants} className="w-full px-2 sm:px-4">
-              <p className="text-sm sm:text-base text-white/80 
-                          max-w-2xl mx-auto leading-relaxed font-light break-words">
-                Find your favorite movies, web series, and anime all in one place
-              </p>
-            </motion.div>
-
-            {/* Search Bar Container */}
-            <motion.div variants={itemVariants} className="pt-2 sm:pt-4 w-full">
-              <div className="w-full max-w-2xl mx-auto px-2 sm:px-4">
-                <SearchBar 
-                  onSearch={onSearch}
-                  placeholder="Search movies, web series, anime..."
-                />
-              </div>
-            </motion.div>
-
-            {/* Quick Access Tags */}
-            <motion.div variants={itemVariants} className="pt-2 sm:pt-4 w-full px-2 sm:px-4">
-              <p className="text-white/70 text-xs mb-2 font-medium text-center">
-                Popular searches:
-              </p>
-              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-xl mx-auto">
-                {[
-                  'Action Movies',
-                  'Netflix Series',
-                  'Anime',
-                  'Comedy',
-                  'Sci-Fi',
-                  'Thriller'
-                ].map((tag, index) => (
-                  <motion.button
-                    key={tag}
-                    className="px-2 sm:px-3 py-1 bg-white/10 backdrop-blur-sm 
-                             text-white text-xs rounded-full border border-white/20
-                             hover:bg-white/20 hover:border-white/40 hover:scale-105
-                             transition-all duration-200 font-medium whitespace-nowrap
-                             focus:outline-none focus:ring-2 focus:ring-white/30"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                  >
-                    {tag}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
+  /* ─── Loading skeleton ─── */
+  if (loading) {
+    return (
+      <div className="relative h-[70vh] lg:h-[85vh] bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:via-black dark:to-black animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
+    );
+  }
+
+  const currentContent = featuredContent[currentIndex];
+
+  /* ─── Empty state ─── */
+  if (!currentContent) {
+    return (
+      <div className="relative h-[70vh] lg:h-[85vh] bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:via-black dark:to-black flex items-center justify-center">
+        <div className="text-center px-4">
+          <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4">
+            Welcome to ArcXzone
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Your gateway to unlimited entertainment
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Genre badges (up to 3) ─── */
+  const genres = currentContent.genres?.slice(0, 3) ?? [];
+
+  return (
+    <div
+      className="relative h-[70vh] lg:h-[85vh] overflow-hidden group"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* ── Background Video / Image ── */}
+      <AnimatePresence mode="sync">
+        <motion.div
+          key={`bg-${currentContent._id}`}
+          className="absolute inset-0"
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          {currentContent.trailerUrl ? (
+            <ReactPlayer
+              url={currentContent.trailerUrl}
+              playing={isPlaying}
+              muted={isMuted}
+              loop
+              width="100%"
+              height="100%"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                minWidth: '100%',
+                minHeight: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <img
+              src={currentContent.backdropUrl || currentContent.posterUrl}
+              alt={currentContent.title}
+              className="w-full h-full object-cover"
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* ── Gradient overlays ── */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+
+      {/* ── Content ── */}
+      <div className="relative h-full flex items-center px-4 lg:px-12">
+        <div className="max-w-2xl w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentContent._id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.45 }}
+              className="space-y-5"
+            >
+              {/* Genre tags */}
+              {genres.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {genres.map((g) => (
+                    <span
+                      key={g}
+                      className="text-xs font-semibold uppercase tracking-widest text-indigo-300 border border-indigo-500/50 px-2 py-0.5 rounded"
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Title */}
+              <h1 className="text-4xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-tight drop-shadow-2xl">
+                {currentContent.title}
+              </h1>
+
+              {/* Meta row */}
+              <div className="flex items-center flex-wrap gap-3">
+                {currentContent.rating && (
+                  <div className="flex items-center bg-yellow-500/20 border border-yellow-400/40 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4 text-yellow-400 mr-1.5 fill-current" />
+                    <span className="font-bold text-yellow-300 text-sm">
+                      {currentContent.rating.toFixed(1)}
+                    </span>
+                  </div>
+                )}
+                {currentContent.releaseDate && (
+                  <span className="text-gray-300 text-sm">
+                    {new Date(currentContent.releaseDate).getFullYear()}
+                  </span>
+                )}
+                <span className="px-2.5 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs font-semibold uppercase tracking-wider text-white">
+                  {currentContent.type}
+                </span>
+                {currentContent.runtime && (
+                  <div className="flex items-center text-gray-300 text-sm">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {formatRuntime(currentContent.runtime)}
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              <p className="text-base lg:text-lg text-gray-300 line-clamp-3 max-w-xl leading-relaxed">
+                {currentContent.description}
+              </p>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Play Now */}
+                <button
+                  onClick={() => handlePlayClick(currentContent._id)}
+                  className="flex items-center gap-2 px-7 py-3 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/30"
+                >
+                  <Play size={20} fill="currentColor" />
+                  Play Now
+                </button>
+
+                {/* Download — redirects to content detail page */}
+                <button
+                  onClick={() => handleDownloadClick(currentContent._id)}
+                  className="flex items-center gap-2 px-6 py-3 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg font-semibold transition-all hover:scale-105 active:scale-95 backdrop-blur-sm shadow-lg shadow-black/30"
+                >
+                  <Download size={20} />
+                  Download
+                </button>
+
+                {/* Mute toggle (only when trailer is present) */}
+                {currentContent.trailerUrl && (
+                  <button
+                    onClick={() => setIsMuted((m) => !m)}
+                    aria-label={isMuted ? 'Unmute trailer' : 'Mute trailer'}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all hover:scale-105 active:scale-95 backdrop-blur-sm border border-white/10"
+                  >
+                    {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* ── Navigation dots ── */}
+      {featuredContent.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+          {featuredContent.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentIndex(i)}
+              aria-label={`Go to slide ${i + 1}`}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === currentIndex
+                  ? 'bg-white w-8'
+                  : 'bg-gray-500 hover:bg-gray-300 w-2'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ── Arrow navigation (desktop only, hidden until hover) ── */}
+      {featuredContent.length > 1 && (
+        <>
+          <button
+            onClick={handlePrev}
+            aria-label="Previous"
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/75 text-white rounded-full transition-all hidden lg:flex opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={handleNext}
+            aria-label="Next"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/75 text-white rounded-full transition-all hidden lg:flex opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </>
+      )}
+
+      {/* ── Progress bar (auto-rotate indicator) ── */}
+      {featuredContent.length > 1 && !isPaused && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
+          <motion.div
+            key={currentIndex}
+            className="h-full bg-indigo-500"
+            initial={{ width: '0%' }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 6, ease: 'linear' }}
+          />
+        </div>
+      )}
     </div>
   );
 };

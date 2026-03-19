@@ -1,15 +1,20 @@
-// src/hooks/useClickOutside.js
 import { useEffect } from 'react';
 
-export const useClickOutside = (ref, callback) => {
+export const useClickOutside = (ref, handler) => {
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
-        callback();
+    const listener = (event) => {
+      if (!ref.current || ref.current.contains(event.target)) {
+        return;
       }
+      handler(event);
     };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [ref, callback]);
+
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
+
+    return () => {
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
+    };
+  }, [ref, handler]);
 };

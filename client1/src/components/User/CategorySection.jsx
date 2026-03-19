@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 const CategorySection = () => {
   const [content, setContent] = useState({
     latest: [],
-    requested: [], // Moved to second position
+    requested: [],
     movie: [],
     webseries: [],
     anime: []
@@ -17,14 +17,14 @@ const CategorySection = () => {
   const [loading, setLoading] = useState(true);
   const [showArrows, setShowArrows] = useState({
     latest: { left: false, right: true },
-    requested: { left: false, right: true }, // Moved to second position
+    requested: { left: false, right: true },
     movie: { left: false, right: true },
     webseries: { left: false, right: true },
     anime: { left: false, right: true }
   });
   const containerRefs = useRef({
     latest: null,
-    requested: null, // Moved to second position
+    requested: null,
     movie: null,
     webseries: null,
     anime: null
@@ -36,11 +36,11 @@ const CategorySection = () => {
     const fetchContent = async () => {
       try {
         const [latest, movies, webseries, anime, requested] = await Promise.all([
-          contentAPI.getAll({ limit: 20, sort: '-releaseDate' }), // Latest content sorted by release date
+          contentAPI.getAll({ limit: 20, sort: '-releaseDate' }),
           contentAPI.getAll({ type: 'movie', limit: 20 }),
           contentAPI.getAll({ type: 'webseries', limit: 20 }),
           contentAPI.getAll({ type: 'anime', limit: 20 }),
-          contentAPI.getAll({ limit: 20, sort: '-createdAt' }) // Fetch all content to filter by slug
+          contentAPI.getAll({ limit: 20, sort: '-createdAt' })
         ]);
 
         // Filter content where slug starts with "request"
@@ -50,7 +50,7 @@ const CategorySection = () => {
 
         setContent({
           latest: latest.data.contents,
-          requested: requestedContent, // Set filtered requested content
+          requested: requestedContent,
           movie: movies.data.contents,
           webseries: webseries.data.contents,
           anime: anime.data.contents
@@ -99,14 +99,12 @@ const CategorySection = () => {
     const container = containerRefs.current[type];
     if (container) {
       container.scrollLeft += e.deltaY;
-      // Check scroll position after wheel scroll
       setTimeout(() => checkScrollPosition(type), 100);
     }
   };
 
   const handleRequestContent = () => {
-    // Navigate to the request content page
-    navigate('/request-content'); // Change this to your actual request content page route
+    navigate('/request-content');
   };
 
   if (loading) {
@@ -210,7 +208,6 @@ const CategorySection = () => {
               ref={el => {
                 containerRefs.current[category.type] = el;
                 if (el) {
-                  // Initial check for scroll position
                   setTimeout(() => checkScrollPosition(category.type), 100);
                 }
               }}

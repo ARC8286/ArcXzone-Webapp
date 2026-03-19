@@ -32,9 +32,9 @@ const SearchPortal = () => {
     'Stranger Things',
     'Avatar',
     'Demon Slayer',
-    'Wednesday',
-    'Money Heist',
-    'The Witcher'
+    'Inception',
+    'Death Note',
+    'Family Man'
   ]);
   const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
 

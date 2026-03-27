@@ -14,7 +14,7 @@ import {
   Sun,
   Moon,
   Users,
-  Heart
+  Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchPortal from './SearchPortal';
@@ -297,39 +297,29 @@ const Navbar = () => {
                 Request
               </motion.button>
 
-              {/* Request Button - Mobile with icon only */}
-              <motion.button
-                onClick={handleRequestContent}
-                className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Request Content"
-              >
-                <Plus size={16} />
-              </motion.button>
-
-              {/* Follow Us Button - Desktop with text */}
+              {/* Follow Us Button - Desktop with original styling but premium colors */}
               <motion.button
                 onClick={handleFollowUs}
                 disabled={isNavigatingToFooter}
-                className="hidden md:flex items-center px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-md transition-all font-medium text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="hidden md:flex items-center px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-md transition-all font-medium text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <Users size={14} className="mr-1.5" />
-                Follow
+                Follow Us
               </motion.button>
 
-              {/* Follow Us Button - Mobile with icon only */}
+              {/* Follow Us Button - Mobile with premium look and text (kept exactly as working) */}
               <motion.button
                 onClick={handleFollowUs}
                 disabled={isNavigatingToFooter}
-                className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="md:hidden flex items-center justify-center px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full transition-all font-medium text-xs shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label="Follow Us"
               >
-                <Heart size={16} />
+                <Crown size={12} className="mr-1.5" />
+                <span>Follow Us</span>
               </motion.button>
 
               {/* Theme Toggle */}

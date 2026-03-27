@@ -66,7 +66,7 @@ const Footer = () => {
             transition={{ duration: 0.5 }}
             className="text-xs uppercase tracking-[0.25em] text-gray-500 dark:text-gray-500 font-medium"
           >
-            Follow For Latest Upadtes
+            Follow Us for Latest Updates
           </motion.p>
 
           {/* Social Links */}

@@ -22,6 +22,7 @@ const CategorySection = () => {
     webseries: { left: false, right: true },
     anime: { left: false, right: true }
   });
+
   const containerRefs = useRef({
     latest: null,
     requested: null,
@@ -29,7 +30,7 @@ const CategorySection = () => {
     webseries: null,
     anime: null
   });
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,13 +41,27 @@ const CategorySection = () => {
           contentAPI.getAll({ type: 'movie', limit: 20 }),
           contentAPI.getAll({ type: 'webseries', limit: 20 }),
           contentAPI.getAll({ type: 'anime', limit: 20 }),
-          contentAPI.getAll({ limit: 20, sort: '-createdAt' })
+          contentAPI.getAll({ limit: 50, sort: '-createdAt' }) // get more for filtering
         ]);
 
-        // Filter content where slug starts with "request"
-        const requestedContent = requested.data.contents.filter(item => 
-          item.slug && item.slug.toLowerCase().startsWith('request')
-        );
+        // 🔥 90 DAYS LOGIC
+        const DAYS_LIMIT = 90;
+
+        const requestedContent = requested.data.contents.filter(item => {
+          if (!item.slug || !item.slug.toLowerCase().startsWith('request')) {
+            return false;
+          }
+
+          if (!item.createdAt) return false;
+
+          const createdDate = new Date(item.createdAt);
+          const currentDate = new Date();
+
+          const diffTime = currentDate - createdDate;
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+          return diffDays <= DAYS_LIMIT;
+        });
 
         setContent({
           latest: latest.data.contents,
@@ -68,11 +83,11 @@ const CategorySection = () => {
   const checkScrollPosition = (type) => {
     const container = containerRefs.current[type];
     if (!container) return;
-    
+
     const scrollLeft = container.scrollLeft;
     const scrollWidth = container.scrollWidth;
     const clientWidth = container.clientWidth;
-    
+
     setShowArrows(prev => ({
       ...prev,
       [type]: {
@@ -85,12 +100,13 @@ const CategorySection = () => {
   const handleScroll = (type, direction) => {
     const container = containerRefs.current[type];
     if (!container) return;
-    
+
     const scrollAmount = container.offsetWidth * 0.8;
-    const newPosition = direction === 'right' 
-      ? container.scrollLeft + scrollAmount 
-      : container.scrollLeft - scrollAmount;
-    
+    const newPosition =
+      direction === 'right'
+        ? container.scrollLeft + scrollAmount
+        : container.scrollLeft - scrollAmount;
+
     container.scrollTo({ left: newPosition, behavior: 'smooth' });
   };
 
@@ -117,7 +133,6 @@ const CategorySection = () => {
     );
   }
 
-  // Define categories in the desired order
   const categories = [
     { type: 'latest', title: 'Latest Releases', data: content.latest },
     { type: 'movie', title: 'Movies', data: content.movie },
@@ -125,19 +140,18 @@ const CategorySection = () => {
     { type: 'anime', title: 'Anime', data: content.anime }
   ];
 
-  // Insert requested section at position 1 (second position) if there are requested items
   if (content.requested.length > 0) {
-    categories.splice(1, 0, { 
-      type: 'requested', 
-      title: 'Requested Content', 
-      data: content.requested 
+    categories.splice(1, 0, {
+      type: 'requested',
+      title: 'Requested Content',
+      data: content.requested
     });
   }
 
   return (
     <div className="w-full px-0 py-6 md:py-10 relative z-0">
       {categories.map((category) => (
-        <motion.div 
+        <motion.div
           key={category.type}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -148,10 +162,9 @@ const CategorySection = () => {
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
               {category.title}
             </h2>
-            
+
             <div className="flex items-center space-x-2">
               {category.type !== 'requested' ? (
-                // View All link for other categories
                 <Link
                   to={`/content?type=${category.type}`}
                   className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center text-sm md:text-base transition-colors"
@@ -160,7 +173,6 @@ const CategorySection = () => {
                   <ChevronRight size={18} className="ml-1" />
                 </Link>
               ) : (
-                // For requested section: View All + Request Content
                 <>
                   <Link
                     to="/content?type=requested"
@@ -180,38 +192,33 @@ const CategorySection = () => {
               )}
             </div>
           </div>
-          
+
           <div className="relative">
-            {/* Left Arrow */}
             {showArrows[category.type]?.left && (
-              <button 
+              <button
                 onClick={() => handleScroll(category.type, 'left')}
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm transition-all"
-                aria-label={`Scroll ${category.type} left`}
               >
                 <ChevronLeft size={24} />
               </button>
             )}
-            
-            {/* Right Arrow */}
+
             {showArrows[category.type]?.right && (
-              <button 
+              <button
                 onClick={() => handleScroll(category.type, 'right')}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 backdrop-blur-sm transition-all"
-                aria-label={`Scroll ${category.type} right`}
               >
                 <ChevronRight size={24} />
               </button>
             )}
-            
-            <div 
-              ref={el => {
+
+            <div
+              ref={(el) => {
                 containerRefs.current[category.type] = el;
                 if (el) {
                   setTimeout(() => checkScrollPosition(category.type), 100);
                 }
               }}
-              id={`${category.type}-container`}
               className="flex overflow-x-auto pb-4 md:pb-6 scroll-smooth px-4 sm:px-6 lg:px-8 hide-scrollbar"
               onWheel={(e) => handleWheelScroll(e, category.type)}
               onScroll={() => checkScrollPosition(category.type)}

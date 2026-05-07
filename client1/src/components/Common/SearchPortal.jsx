@@ -37,6 +37,7 @@ const SearchPortal = () => {
     'Family Man'
   ]);
   const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
+  const [searchError, setSearchError] = useState(''); // Add state for search error
 
   const navigate = useNavigate();
   const inputRef = useRef(null);
@@ -60,6 +61,7 @@ const SearchPortal = () => {
             .map(result => result.transcript)
             .join('');
           setSearchQuery(transcript);
+          setSearchError(''); // Clear error when voice input is received
         };
 
         recognitionRef.current.onend = () => {
@@ -90,11 +92,19 @@ const SearchPortal = () => {
     }
   }, [isSearchOpen, featuredContent.length]);
 
-  // Handle search
+  // Handle search with minimum 2 characters validation
   useEffect(() => {
-    if (debouncedQuery.trim().length >= 2) {
-      performSearch(debouncedQuery.trim());
+    const trimmedQuery = debouncedQuery.trim();
+    
+    if (trimmedQuery.length >= 2) {
+      setSearchError(''); // Clear any previous error
+      performSearch(trimmedQuery);
+    } else if (trimmedQuery.length > 0 && trimmedQuery.length < 2) {
+      setSearchError('Please enter at least 2 characters or numbers');
+      setSearchResults([]);
+      setSelectedIndex(-1);
     } else {
+      setSearchError('');
       setSearchResults([]);
       setSelectedIndex(-1);
     }
@@ -104,6 +114,7 @@ const SearchPortal = () => {
   useEffect(() => {
     if (isSearchOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
+      setSearchError(''); // Reset error when opening
     }
   }, [isSearchOpen]);
 
@@ -153,8 +164,17 @@ const SearchPortal = () => {
       const response = await contentAPI.search(query);
       setSearchResults(response.data);
       addToHistory(query);
+      setSearchError(''); // Clear error on successful search
     } catch (error) {
       console.error('Search error:', error);
+      if (error.response?.status === 400) {
+        setSearchError(error.response.data.message);
+      } else if (error.response?.status === 404) {
+        setSearchResults([]);
+        setSearchError(''); // Let the UI handle the "no results" message
+      } else {
+        setSearchError('An error occurred while searching');
+      }
       setSearchResults([]);
     } finally {
       setIsLoading(false);
@@ -170,11 +190,13 @@ const SearchPortal = () => {
     setSearchQuery('');
     setSearchResults([]);
     setSelectedIndex(-1);
+    setSearchError('');
     inputRef.current?.focus();
   };
 
   const handleTrendingClick = (query) => {
     setSearchQuery(query);
+    setSearchError('');
   };
 
   const startVoiceSearch = () => {
@@ -246,7 +268,7 @@ const SearchPortal = () => {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search for movies, series, anime... with min. 3 char"
+                      placeholder="Search for movies, series, anime... (min. 2 characters)"
                       className="w-full bg-transparent text-white text-base sm:text-xl placeholder-gray-500 focus:outline-none pr-16 sm:pr-20"
                       autoComplete="off"
                     />
@@ -283,6 +305,19 @@ const SearchPortal = () => {
                   Close
                 </button>
               </div>
+              
+              {/* Search Error Message */}
+              {searchError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 p-2 bg-red-900/20 border border-red-800 rounded-lg"
+                >
+                  <p className="text-red-400 text-xs sm:text-sm text-center">
+                    {searchError}
+                  </p>
+                </motion.div>
+              )}
             </div>
 
             {/* Search Content - Responsive */}
@@ -362,7 +397,24 @@ const SearchPortal = () => {
                     ))}
                   </div>
                 </div>
-              ) : searchQuery.length === 0 ? (
+              ) : searchQuery.trim().length >= 2 && searchQuery.trim().length > 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 sm:p-12">
+                  <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500 mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 text-center">
+                    No results found
+                  </h3>
+                  <p className="text-gray-400 text-center mb-6 max-w-md text-sm sm:text-base">
+                    We couldn't find any matches for "{searchQuery}"
+                  </p>
+                  <button
+                    onClick={handleRequestContent}
+                    className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center text-sm sm:text-base"
+                  >
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    Request this content
+                  </button>
+                </div>
+              ) : searchQuery.trim().length === 0 ? (
                 <div className="p-4 sm:p-8">
                   {/* Trending Searches */}
                   <div className="mb-6 sm:mb-8">
@@ -445,31 +497,14 @@ const SearchPortal = () => {
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 sm:p-12">
-                  <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500 mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 text-center">
-                    No results found
-                  </h3>
-                  <p className="text-gray-400 text-center mb-6 max-w-md text-sm sm:text-base">
-                    We couldn't find any matches for "{searchQuery}"
-                  </p>
-                  <button
-                    onClick={handleRequestContent}
-                    className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center text-sm sm:text-base"
-                  >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    Request this content
-                  </button>
-                </div>
-              )}
+              ) : null}
             </div>
 
             {/* Footer Help Text - Hidden on small screens */}
             {(searchResults.length > 0 || searchQuery.length === 0) && (
               <div className="hidden sm:block px-6 py-3 border-t border-gray-800 bg-gray-900/50">
                 <p className="text-xs text-gray-500 text-center">
-                  ↑↓ Navigate • Enter Select • Esc Close
+                  ↑↓ Navigate • Enter Select • Esc Close • Min. 2 characters for search
                 </p>
               </div>
             )}

@@ -95,10 +95,10 @@ const getAllContent = async (req, res, next) => {
 const searchContent = async (req, res, next) => {
   const { q, type } = req.query;
 
-  // Minimum 3 characters validation
-  if (!q || typeof q !== 'string' || q.trim().length < 3) {
+  // Minimum 2 characters validation (including numbers)
+  if (!q || typeof q !== 'string' || q.trim().length < 2) {
     return res.status(400).json({ 
-      message: "Please provide a search query with at least 3 characters" 
+      message: "Please provide a search query with at least 2 characters or numbers" 
     });
   }
 

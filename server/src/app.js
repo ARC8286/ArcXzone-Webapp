@@ -32,6 +32,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'https://arc-xzone-webapp.vercel.app',
+    'https://arcxzone-webapp-production.up.railway.app',
     'https://*.vercel.app'
   ],
   credentials: true
